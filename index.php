@@ -21,55 +21,62 @@ $mcusername = $user_profile[$id]['options']['cust_minecr'];
 if ($mcusername == "" && isset($_REQUEST['mcuser'])) {
 	$mcusername = $_REQUEST['mcuser'];
 }
+
+$is_logged_on_mc = false;
+if ($mcusername != "") {
+	$Query = new MinecraftQuery();
+	try {
+		$Query -> Connect($mc_server_address, $mc_query_port);
+		if (in_array($mcusername, $Query -> GetPlayers())) {
+			$is_logged_on_mc = true;
+		}
+	} catch( MinecraftQueryException $e ) {
+	}
+}
 //This is self explanatory
 template_header();
 
 //Here we define the link tree
 $context['linktree'] = array('href' => $scripturl, );
 if (isset($_REQUEST['reqwhitelist'])) {
-	try {
-		$Rcon = new MinecraftRcon;
+	if ($is_logged_on_mc) {
+		try {
+			$Rcon = new MinecraftRcon;
 
-		$Rcon -> Connect($mc_server_address, $mc_rcon_port, $mc_rcon_password, $mc_rcon_timeout);
-		$result = lookup($mcusername, $mcbans_api_key);
-		$Data = $Rcon -> Command("wl addtolist " . $mcusername);
-		if (count($result['global']) > 0 || count($result['local']) > 0) {
-			$Rcon -> Command("a [Whitelist] User " . $mcusername . " using forum account " . $user_profile[$id]['member_name'] . " has " . count($result['global']) . " global and " . count($result['local']) . " bans!");
-			echo '<p>You have ' . count($result['global']) . ' global and ' . count($result['local']) . ' bans! Please see <a href="http://mcbans.com/player/' . $mcusername . '">MCBans.com</a>.  Please request an admin to whitelist you on the server.</p>';
-		} elseif ($context['user']['is_logged']) {
-			$Data = $Rcon -> Command("wl add " . $mcusername);
-			$Rcon -> Command("a [Whitelist] User " . $mcusername . " using forum account " . $user_profile[$id]['member_name'] . " was autowhitelisted");
-			echo '<p>You were autowhitelisted as you were logged in on the forum</p>';
-		}else{
-			echo '<p>Thank you, as you weren\'t registered on the site your whitelist has gone into a queue. Please request an admin to whitelist you on the server.</p>';
-		}
-		if ($Data === false) {
-			throw new MinecraftRconException("Failed to get command result.");
-		} else if (StrLen($Data) == 0) {
-			throw new MinecraftRconException("Got command result, but it's empty.");
+			$Rcon -> Connect($mc_server_address, $mc_rcon_port, $mc_rcon_password, $mc_rcon_timeout);
+			$result = lookup($mcusername, $mcbans_api_key);
+			$Data = $Rcon -> Command("wl addtolist " . $mcusername);
+			if (count($result['global']) > 0 || count($result['local']) > 0) {
+				$Rcon -> Command("a [Whitelist] User " . $mcusername . " using forum account " . $user_profile[$id]['member_name'] . " has " . count($result['global']) . " global and " . count($result['local']) . " bans!");
+				echo '<p>You have ' . count($result['global']) . ' global and ' . count($result['local']) . ' bans! Please see <a href="http://mcbans.com/player/' . $mcusername . '">MCBans.com</a>.  Please request an admin to whitelist you on the server.</p>';
+			} elseif ($context['user']['is_logged']) {
+				$Data = $Rcon -> Command("wl add " . $mcusername);
+				$Rcon -> Command("a [Whitelist] User " . $mcusername . " using forum account " . $user_profile[$id]['member_name'] . " was autowhitelisted");
+				echo '<p>You were autowhitelisted as you were logged in on the forum</p>';
+			} else {
+				echo '<p>Thank you, as you weren\'t registered on the site your whitelist has gone into a queue. Please request an admin to whitelist you on the server.</p>';
+			}
+			if ($Data === false) {
+				throw new MinecraftRconException("Failed to get command result.");
+			} else if (StrLen($Data) == 0) {
+				throw new MinecraftRconException("Got command result, but it's empty.");
+			}
+
+			echo HTMLSpecialChars($Data);
+		} catch( MinecraftRconException $e ) {
+			echo $e -> getMessage();
 		}
 
-		echo HTMLSpecialChars($Data);
-	} catch( MinecraftRconException $e ) {
-		echo $e -> getMessage();
+		$Rcon -> Disconnect();
+	} else {
+		echo "You must be logged in on the server in order to get whitelisted.";
 	}
-
-	$Rcon -> Disconnect();
 } else {
 
 	//Here is the content, such as the title and the body message of the custom page.
 	include ("content.html");
 	if ($mcusername != "") {
-		$Query = new MinecraftQuery();
-		$is_logged_on_mc = false;
-		try {
-			$Query -> Connect($mc_server_address, $mc_query_port);
-			if (in_array($mcusername, $Query -> GetPlayers())) {
-				$is_logged_on_mc = true;
-			}
-		} catch( MinecraftQueryException $e ) {
-			echo $e -> getMessage();
-		}
+
 		echo "<b>Your Minecraft username seems to be <i>" . $mcusername . "</i></b>. If this is not correct, please correct that information in your profile settings.<br/>";
 		if ($is_logged_on_mc) {
 			echo 'You are logged in on the server.
