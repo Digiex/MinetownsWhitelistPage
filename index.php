@@ -1,7 +1,11 @@
 <?php
 //Set the banning active
 $ssi_ban = true;
-
+if(file_exists("settings.php")){
+	include("settings.php");
+}else{
+	die("Modify settings.template.php and save as settings.php.");
+}
 //Path to SSI.php
 require ("../minetowns.com/SSI.php");
 

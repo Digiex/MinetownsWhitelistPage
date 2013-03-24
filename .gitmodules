@@ -1,0 +1,3 @@
+[submodule "PHP-Minecraft-Query"]
+	path = PHP-Minecraft-Query
+	url = https://github.com/xPaw/PHP-Minecraft-Query.git
