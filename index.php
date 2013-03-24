@@ -1,11 +1,12 @@
 <?php
 //Set the banning active
 $ssi_ban = true;
-if(file_exists("settings.php")){
-	include("settings.php");
-}else{
+if (file_exists("settings.php")) {
+	include ("settings.php");
+} else {
 	die("Modify settings.template.php and save as settings.php.");
 }
+require 'PHP-Minecraft-Query/MinecraftRcon.class.php';
 //Path to SSI.php
 require ("../minetowns.com/SSI.php");
 
@@ -127,6 +128,25 @@ $context['linktree'] = array('href' => $scripturl, );
 	global $user_profile, $context;
 	if ($context['user']['is_logged']) {
 		echo "<b>Your Minecraft username seems to be <i>" . $user_profile[$id]['options']['cust_minecr'] . "</i></b>. If this is not correct, please correct that information in your profile settings.";
+		try {
+			$Rcon = new MinecraftRcon;
+
+			$Rcon -> Connect($mc_server_address, $mc_rcon_port, $mc_rcon_password, $mc_rcon_timeout);
+
+			$Data = $Rcon -> Command("say Sharks");
+
+			if ($Data === false) {
+				throw new MinecraftRconException("Failed to get command result.");
+			} else if (StrLen($Data) == 0) {
+				throw new MinecraftRconException("Got command result, but it's empty.");
+			}
+
+			echo HTMLSpecialChars($Data);
+		} catch( MinecraftRconException $e ) {
+			echo $e -> getMessage();
+		}
+
+		$Rcon -> Disconnect();
 	} else {
 		echo "<b>Please log in or register first to get whitelisted.</b>";
 	}
