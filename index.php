@@ -7,6 +7,7 @@ if (file_exists("settings.php")) {
 	die("Modify settings.template.php and save as settings.php.");
 }
 require 'PHP-Minecraft-Query/MinecraftRcon.class.php';
+require 'PHP-Minecraft-Query/MinecraftQuery.class.php';
 //Path to SSI.php
 require ("../minetowns.com/SSI.php");
 
@@ -127,13 +128,29 @@ $context['linktree'] = array('href' => $scripturl, );
 	loadMemberData(array($id));
 	global $user_profile, $context;
 	if ($context['user']['is_logged']) {
-		echo "<b>Your Minecraft username seems to be <i>" . $user_profile[$id]['options']['cust_minecr'] . "</i></b>. If this is not correct, please correct that information in your profile settings.";
+		$Query = new MinecraftQuery();
+		$is_logged_on_mc = false;
+		$mcusername = $user_profile[$id]['options']['cust_minecr'];
+		try {
+			$Query -> Connect($mc_server_address, $mc_query_port);
+			if (array_search($mcusername, $Query -> GetPlayers()) == $mcusername) {
+				$is_logged_on_mc = true;
+			}
+		} catch( MinecraftQueryException $e ) {
+			echo $e -> getMessage();
+		}
+		echo "<b>Your Minecraft username seems to be <i>" . $mcusername . "</i></b>. If this is not correct, please correct that information in your profile settings.<br/>";
+		if($is_logged_on_mc){
+			echo "You are logged in on the server.";
+		}else{
+			echo "You are <b>not</b> logged in on the server. Please connect to the server first.";
+		}
 		try {
 			$Rcon = new MinecraftRcon;
 
 			$Rcon -> Connect($mc_server_address, $mc_rcon_port, $mc_rcon_password, $mc_rcon_timeout);
 
-			$Data = $Rcon -> Command("say Sharks");
+			$Data = $Rcon -> Command("who");
 
 			if ($Data === false) {
 				throw new MinecraftRconException("Failed to get command result.");
