@@ -7,4 +7,6 @@ $mc_rcon_password = "";
 $mc_rcon_timeout = 2;
 
 $mc_query_port = 25565;
+
+$mcbans_api_key = "";
 ?>
