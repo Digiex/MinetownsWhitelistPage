@@ -27,9 +27,12 @@ if ($mcusername != "") {
 	$Query = new MinecraftQuery();
 	try {
 		$Query -> Connect($mc_server_address, $mc_query_port);
-		if (in_array($mcusername, $Query -> GetPlayers())) {
-			$is_logged_on_mc = true;
-		}
+        foreach($Query -> GetPlayers() as $player){
+            if(strtolower(trim($player)) == strtolower(trim($mcusername))){
+                $is_logged_on_mc = true;
+                break;
+            }
+        }
 	} catch( MinecraftQueryException $e ) {
 	}
 }
